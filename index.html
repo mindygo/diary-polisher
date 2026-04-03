@@ -36,9 +36,8 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo } = React;
 
-        // 图标助手
+        // 图标助手 - 不需要每次都调用 createIcons
         const Icon = ({ name, className }) => {
-            useEffect(() => { if (window.lucide) lucide.createIcons(); }, [name]);
             return <i data-lucide={name} className={className}></i>;
         };
 
@@ -76,8 +75,12 @@
             useEffect(() => {
                 const saved = localStorage.getItem('diary_polisher_final');
                 if (saved) setHistory(JSON.parse(saved));
+            }, []);
+
+            // 初始化 Lucide 图标（只执行一次）
+            useEffect(() => {
                 if (window.lucide) lucide.createIcons();
-            }, [view, result]);
+            }, []);
 
             const stats = useMemo(() => {
                 const totalWords = history.reduce((acc, h) => acc + (h.original?.trim().split(/\s+/).length || 0), 0);
@@ -111,9 +114,6 @@
                     });
                     const data = await response.json();
 
-                    // 调试：打印完整响应
-                    console.log('API Response:', JSON.stringify(data, null, 2));
-
                     if (data.error) {
                         throw new Error(data.error.message || 'API 调用失败');
                     }
@@ -121,12 +121,10 @@
                         throw new Error('API 返回数据格式错误，请检查 API Key');
                     }
 
-                    // Gemini 2.5 Flash 可能返回不同结构，尝试解析
                     const responseText = data.candidates[0].content?.parts?.[0]?.text;
                     if (!responseText) {
                         throw new Error('API 返回内容为空');
                     }
-                    console.log('Response text:', responseText);
                     const resJson = JSON.parse(responseText);
                     
                     setResult(resJson);
