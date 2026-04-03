@@ -111,8 +111,8 @@
                     });
                     const data = await response.json();
 
-                    // 调试：打印完整响应（生产环境应移除）
-                    console.log('API Response:', data);
+                    // 调试：打印完整响应
+                    console.log('API Response:', JSON.stringify(data, null, 2));
 
                     if (data.error) {
                         throw new Error(data.error.message || 'API 调用失败');
@@ -121,7 +121,13 @@
                         throw new Error('API 返回数据格式错误，请检查 API Key');
                     }
 
-                    const resJson = JSON.parse(data.candidates[0].content.parts[0].text);
+                    // Gemini 2.5 Flash 可能返回不同结构，尝试解析
+                    const responseText = data.candidates[0].content?.parts?.[0]?.text;
+                    if (!responseText) {
+                        throw new Error('API 返回内容为空');
+                    }
+                    console.log('Response text:', responseText);
+                    const resJson = JSON.parse(responseText);
                     
                     setResult(resJson);
                     const newEntry = { 
